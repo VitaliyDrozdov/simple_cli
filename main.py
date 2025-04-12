@@ -1,3 +1,4 @@
+from encodings.punycode import T
 from typing import Any
 
 
@@ -18,12 +19,36 @@ class Database:
     def unset(self, key: str):
         self.transactions[-1][key] = None
 
-    def counts(self, value: str):
-        return sum(1 for v in self.transactions[-1].values() if v == value)
+    def counts(self, value: str) -> int:
+        return sum(1 for v in self._build_final_state().values() if v == value)
 
     def find(self, value: str) -> str:
-        keys = [k for k, v in self.transactions[-1] if v == value]
+        keys = [k for k, v in self._build_final_state().items() if v == value]
         return " ".join(keys) if keys else "NULL"
+
+    def begin(self):
+        self.transactions.append(dict())
+
+    def rollback(self) -> bool:
+        if len(self.transactions) <= 1:
+            return False
+        self.transactions.pop()
+        return True
+
+    def commit(self) -> bool:
+        if len(self.transactions) <= 1:
+            return False
+        current_transaction = self.transactions.pop()
+        for k, v in current_transaction.items():
+            self.transactions[-1][k] = v
+        return True
+
+    def _build_final_state(self) -> dict:
+        state = dict()
+        for layer in self.transactions:
+            for k, v in layer.items():
+                state[k] = v
+        return {k: v for k, v in state.items() if v is not None}
 
 
 class CommandManager:
