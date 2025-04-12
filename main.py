@@ -35,9 +35,11 @@ class Database:
     def commit(self) -> bool:
         if len(self.transactions) <= 1:
             return False
-        current_transaction = self.transactions.pop()
-        for k, v in current_transaction.items():
-            self.transactions[-1][k] = v
+        base = self.transactions[0]
+        for layer in self.transactions[1:]:
+            for k, v in layer.items():
+                base[k] = v
+        self.transactions = [base]
         return True
 
     def _build_final_state(self) -> dict:
