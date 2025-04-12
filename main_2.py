@@ -1,5 +1,29 @@
+from typing import Any
+
+
 class Database:
-    pass
+    def __init__(self):
+        self.transactions = list(dict())
+
+    def set(self, key: str, value: str):
+        self.transactions[-1][key] = value
+
+    def get(self, key: str) -> str:
+        value = None
+        for layer in reversed(self.transactions):
+            if key in layer:
+                value = layer[key]
+        return value if value is not None else "NULL"
+
+    def unset(self, key: str):
+        self.transactions[-1][key] = None
+
+    def counts(self, value: str):
+        return sum(1 for v in self.transactions[-1].values() if v == value)
+
+    def find(self, value: str) -> str:
+        keys = [k for k, v in self.transactions[-1] if v == value]
+        return " ".join(keys) if keys else "NULL"
 
 
 class CommandManager:
