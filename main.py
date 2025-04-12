@@ -1,3 +1,16 @@
+def require_args(exp_count: int, cmd_name: str):
+    def decorator(func):
+        def wrapper(self, *args, **kwargs):
+            if len(*args, **kwargs) != exp_count:
+                print(f"Команда {cmd_name} требует {exp_count - 1} аргумента")
+                return
+            return func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 class Database:
     def __init__(self):
         self.transactions = [dict()]
@@ -59,9 +72,9 @@ class CommandManager:
             "UNSET": self.handle_unset,
             "COUNTS": self.handle_counts,
             "FIND": self.handle_find,
-            "BEGIN": self.handle_begin,
-            "ROLLBACK": self.handle_rollback,
-            "COMMIT": self.handle_commit,
+            "BEGIN": self._handle_transaction_cmd,
+            "ROLLBACK": self._handle_transaction_cmd,
+            "COMMIT": self._handle_transaction_cmd,
             "END": self.handle_end,
         }
         self.db = Database()
@@ -76,60 +89,44 @@ class CommandManager:
             return
         self._commands[key](user_commands)
 
+    @require_args(3, "SET")
     def handle_set(self, user_commands: list[str]):
-        if len(user_commands) != 3:
-            print("SET требует два аргумента: SET <ключ> <значение>")
-            return
         k, v = user_commands[1], user_commands[2]
         self.db.set(k, v)
 
+    @require_args(2, "GET")
     def handle_get(self, user_commands: list[str]):
-        if len(user_commands) != 2:
-            print("GET требует один аргумент: GET <ключ>")
-            return
         k = user_commands[1]
         print(self.db.get(k))
 
+    @require_args(2, "UNSET")
     def handle_unset(self, user_commands: list[str]):
-        if len(user_commands) != 2:
-            print("UNSET требует один аргумент: UNSET <ключ>")
-            return
         key = user_commands[1]
         self.db.unset(key)
 
+    @require_args(2, "COUNTS")
     def handle_counts(self, user_commands: list[str]):
-        if len(user_commands) != 2:
-            print("COUNTS требует один аргумент: COUNTS <значение>")
-            return
         value = user_commands[1]
         print(self.db.counts(value))
 
+    @require_args(2, "FIND")
     def handle_find(self, user_commands: list[str]):
-        if len(user_commands) != 2:
-            print("FIND требует один аргумент: FIND <значение>")
-            return
         value = user_commands[1]
         print(self.db.find(value))
 
-    def handle_begin(self, user_commands: list[str]):
-        if len(user_commands) != 1:
-            print("BEGIN не принимает аргументов")
+    def _handle_transaction_cmd(self, cmds: list[str]):
+        cmd = cmds[0]
+        if len(cmds) != 1:
+            print(f"{cmd} не принимает аргументов")
             return
-        self.db.begin()
-
-    def handle_rollback(self, user_commands: list[str]):
-        if len(user_commands) != 1:
-            print("Ошибка: ROLLBACK не принимает аргументов")
-            return
-        if not self.db.rollback():
-            print("NO TRANSACTION")
-
-    def handle_commit(self, user_commands: list[str]):
-        if len(user_commands) != 1:
-            print("Ошибка: COMMIT не принимает аргументов")
-            return
-        if not self.db.commit():
-            print("NO TRANSACTION")
+        if cmd == "BEGIN":
+            self.db.begin()
+        elif cmd == "ROLLBACK":
+            if not self.db.rollback():
+                print("NO TRANSACTION")
+        elif cmd == "COMMIT":
+            if not self.db.commit():
+                print("NO TRANSACTION")
 
     def handle_end(self, user_commands: list[str]):
         if len(user_commands) != 1:
