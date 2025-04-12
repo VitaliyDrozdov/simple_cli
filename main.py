@@ -1,10 +1,6 @@
-from encodings.punycode import T
-from typing import Any
-
-
 class Database:
     def __init__(self):
-        self.transactions = list(dict())
+        self.transactions = [dict()]
 
     def set(self, key: str, value: str):
         self.transactions[-1][key] = value
@@ -14,6 +10,7 @@ class Database:
         for layer in reversed(self.transactions):
             if key in layer:
                 value = layer[key]
+                break
         return value if value is not None else "NULL"
 
     def unset(self, key: str):
@@ -75,13 +72,13 @@ class CommandManager:
         if key not in self._commands:
             print(f"Неизвестная команда {key}")
             return
-        self._commands[key](line)
+        self._commands[key](user_commands)
 
     def handle_set(self, user_commands: list[str]):
         if len(user_commands) != 3:
             print("SET требует два аргумента: SET <ключ> <значение>")
             return
-        k, v = user_commands[1][2]
+        k, v = user_commands[1], user_commands[2]
         self.db.set(k, v)
 
     def handle_get(self, user_commands: list[str]):
@@ -89,7 +86,7 @@ class CommandManager:
             print("GET требует один аргумент: GET <ключ>")
             return
         k = user_commands[1]
-        self.db.get(k)
+        print(self.db.get(k))
 
     def handle_unset(self, user_commands: list[str]):
         if len(user_commands) != 2:
@@ -136,12 +133,12 @@ class CommandManager:
         if len(user_commands) != 1:
             print("Ошибка: END не принимает аргументов")
             return
-        self.running = False
+        self.is_running = False
 
     def run(self):
         while self.is_running:
             try:
-                cur_input = input()
+                cur_input = input(">")
             except EOFError:
                 print("Программа завершена пользователем.")
                 break
