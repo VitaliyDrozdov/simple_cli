@@ -54,6 +54,12 @@ class Database:
                 base[k] = v
         self.transactions = [base]
         return True
+        # if len(self.transactions) <= 1:
+        #     return False
+        # last = self.transactions.pop()
+        # for k, v in last.items():
+        #     self.transactions[-1][k] = v
+        # return True
 
     def _build_final_state(self) -> dict:
         state = dict()
@@ -123,10 +129,12 @@ class CommandManager:
             self.db.begin()
         elif cmd == "ROLLBACK":
             if not self.db.rollback():
-                print("NO TRANSACTION")
+                # print("NO TRANSACTION")
+                pass
         elif cmd == "COMMIT":
             if not self.db.commit():
-                print("NO TRANSACTION")
+                # print("NO TRANSACTION")
+                pass
 
     def handle_end(self, user_commands: list[str]):
         if len(user_commands) != 1:
