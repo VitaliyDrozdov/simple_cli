@@ -46,31 +46,11 @@ class Database:
         return True
 
     def commit(self) -> bool:
-        # if len(self.transactions) <= 1:
-        #     return False
-        # base = self.transactions[0]
-        # for layer in self.transactions[1:]:
-        #     for k, v in layer.items():
-        #         base[k] = v
-        # self.transactions = [base]
-        # return True
-        # # if len(self.transactions) <= 1:
-        # #     return False
-        # # last = self.transactions.pop()
-        # # for k, v in last.items():
-        # #     self.transactions[-1][k] = v
-        # # return True
-        # if len(self.transactions) <= 1:
-        #     return False
-
-        # Объединяем все изменения из всех открытых транзакций (кроме базового)
         merged = {}
         for layer in self.transactions[1:]:
             merged.update(layer)
 
-        # Оставляем только базовый слой
         self.transactions = [self.transactions[0]]
-        # Применяем все изменения к базовому слою
         for k, v in merged.items():
             self.transactions[0][k] = v
 
